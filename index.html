@@ -3,57 +3,137 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>prodect</title>
+    <title>Product Management System</title>
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="css/bootstrap.min.css">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="css/main.css">
 </head>
-<body>
+<body class="bg-light">
     
-    <h1 class="text-center bg-primary py-3 text-white" >Shop System</h1>
+    <!-- Navbar / Header -->
+    <header class="bg-primary text-white py-4 shadow-sm mb-4">
+        <div class="container text-center">
+            <h1 class="h2 fw-bold mb-1"><i class="fa-solid fa-boxes-stacked me-2"></i>Product Management System</h1>
+            <p class="mb-0 text-white-50">Create, Read, Update, Delete & Search Products with LocalStorage</p>
+        </div>
+    </header>
        
-      <div class="container py-5">
-        <div class="form-group mb-3">
-            <label class="py-3" for="productName">Product Name</label>
-            <input type="text" id="productName" class="form-control">
-        </div>
+    <main class="container mb-5">
+        <!-- Product Form Card -->
+        <div class="card shadow-sm border-0 mb-4 rounded-3">
+            <div class="card-header bg-white py-3 border-0">
+                <h5 class="card-title mb-0 text-primary fw-bold" id="formTitle">
+                    <i class="fa-solid fa-plus-circle me-2"></i>Add New Product
+                </h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <div class="row g-3">
+                    <!-- Product Name -->
+                    <div class="col-md-6">
+                        <label for="productName" class="form-label fw-semibold">Product Name <span class="text-danger">*</span></label>
+                        <input type="text" id="productName" class="form-control" placeholder="e.g. Samsung Galaxy, Toshiba" oninput="validateForm(this)">
+                        <div class="invalid-feedback">
+                            Must start with a capital letter and be 3-25 characters long.
+                        </div>
+                    </div>
 
-        <div class="form-group mb-3">
-            <label class="py-3" for="productPrice">Product Price</label>
-            <input type="number" id="productPrice" class="form-control">
-        </div>
+                    <!-- Product Price -->
+                    <div class="col-md-6">
+                        <label for="productPrice" class="form-label fw-semibold">Product Price ($) <span class="text-danger">*</span></label>
+                        <input type="number" id="productPrice" class="form-control" placeholder="e.g. 500" min="1" step="0.01" oninput="validateForm(this)">
+                        <div class="invalid-feedback">
+                            Price must be a valid positive number (1 - 100,000).
+                        </div>
+                    </div>
 
-        <div class="form-group mb-3">
-            <label class="py-3" for="productCategory">Product Category</label>
-            <input type="text" id="productCategory" class="form-control">
-        </div>
+                    <!-- Product Category -->
+                    <div class="col-md-6">
+                        <label for="productCategory" class="form-label fw-semibold">Product Category <span class="text-danger">*</span></label>
+                        <input type="text" id="productCategory" class="form-control" placeholder="e.g. Mobile, TV, Electronics" oninput="validateForm(this)">
+                        <div class="invalid-feedback">
+                            Category must start with a capital letter and be 3-20 characters long.
+                        </div>
+                    </div>
 
-        <div class="form-group mb-3">
-            <label class="py-3" for="productDesc">Product Desc</label>
-            <textarea type="text" id="productDesc" class="form-control"></textarea>
-        </div>
-        <button id="mainBtn" class="btn btn-primary" onclick="addProduct()">Add Product</button>
-      </div> 
+                    <!-- Product Description -->
+                    <div class="col-md-6">
+                        <label for="productDesc" class="form-label fw-semibold">Product Description</label>
+                        <textarea id="productDesc" class="form-control" rows="1" placeholder="Brief description of the product..." oninput="validateForm(this)"></textarea>
+                        <div class="invalid-feedback">
+                            Description must be between 3 and 250 characters if provided.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Action Buttons -->
+                <div class="mt-4 d-flex gap-2">
+                    <button id="mainBtn" class="btn btn-primary px-4 fw-semibold" onclick="handleProductSubmit()">
+                        <i class="fa-solid fa-plus me-1"></i> Add Product
+                    </button>
+                    <button id="cancelBtn" class="btn btn-outline-secondary px-3 d-none" onclick="cancelUpdate()">
+                        <i class="fa-solid fa-xmark me-1"></i> Cancel
+                    </button>
+                    <button id="clearBtn" class="btn btn-outline-dark px-3 ms-auto" onclick="clearForm()">
+                        <i class="fa-solid fa-eraser me-1"></i> Clear Form
+                    </button>
+                </div>
+            </div>
+        </div> 
       
-      <div class="container">
-        <input type="text" onkeyup="searchProduct(this.value)" placeholder="search......." class="form-control w-75 mx-auto mb-3">
-    <div class="table-responsive">    
-        <table class="table table-striped text-center">
-            <thead>
-                <th>index</th>
-                <th>productName</th>
-                <th>productPrice</th>
-                <th>productCategory</th>
-                <th>productDescription</th>
-                <th>update</th>
-                <th>delete</th>
-            </thead>
+        <!-- Products Table & Search Card -->
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-4">
+                
+                <!-- Search & Actions Bar -->
+                <div class="row g-3 align-items-center mb-4">
+                    <div class="col-md-8">
+                        <div class="input-group">
+                            <span class="input-group-text bg-white border-end-0 text-muted">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                            </span>
+                            <input type="text" id="searchInput" oninput="searchProducts(this.value)" placeholder="Search products by name or category..." class="form-control border-start-0 ps-0">
+                            <button class="btn btn-outline-secondary" type="button" onclick="clearSearch()" title="Clear Search">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <button id="deleteAllBtn" class="btn btn-danger w-100 w-md-auto fw-semibold" onclick="deleteAllProducts()">
+                            <i class="fa-solid fa-trash-can me-1"></i> Delete All (<span id="productsCount">0</span>)
+                        </button>
+                    </div>
+                </div>
 
-            <tbody id="tableBody"></tbody>
-        </table>
-    </div>
-    </div>
+                <!-- Table -->
+                <div class="table-responsive">    
+                    <table class="table table-hover align-middle text-center mb-0">
+                        <thead class="table-light text-secondary">
+                            <tr>
+                                <th style="width: 5%;">#</th>
+                                <th style="width: 25%;">Product Name</th>
+                                <th style="width: 15%;">Price</th>
+                                <th style="width: 15%;">Category</th>
+                                <th style="width: 20%;">Description</th>
+                                <th style="width: 10%;">Update</th>
+                                <th style="width: 10%;">Delete</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <!-- Injected dynamically via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
 
+            </div>
+        </div>
+    </main>
+
+    <!-- Bootstrap Bundle JS -->
     <script src="js/bootstrap.bundle.min.js"></script>
+    <!-- Main Custom JS -->
     <script src="js/main.js"></script>
 </body>
 </html>

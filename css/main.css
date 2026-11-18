@@ -1,3 +1,65 @@
+/* Custom styling for Product Management System */
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: #333;
+}
+
 textarea {
     resize: none;
+}
+
+/* Card & Shadow styling */
+.card {
+    transition: box-shadow 0.2s ease-in-out;
+}
+
+.table th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    padding: 12px 10px;
+}
+
+.table td {
+    padding: 12px 10px;
+    vertical-align: middle;
+}
+
+/* Search match highlight */
+mark.search-highlight {
+    background-color: #ffe066;
+    color: #1a1a1a;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* Validation transitions */
+.form-control.is-valid,
+.form-control.is-invalid {
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Empty state styling */
+.empty-state {
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    color: #adb5bd;
+    margin-bottom: 15px;
+    display: block;
+}
+
+/* Buttons transition */
+.btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.btn:active {
+    transform: scale(0.98);
 }
