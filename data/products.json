@@ -1,0 +1,26 @@
+[
+  {
+    "id": "1",
+    "name": "Samsung Galaxy S24",
+    "price": "899.99",
+    "category": "Mobile",
+    "description": "Flagship smartphone with AI camera features",
+    "createdAt": "2026-11-18T16:00:00.000Z"
+  },
+  {
+    "id": "2",
+    "name": "Dell XPS 15",
+    "price": "1499.00",
+    "category": "Laptop",
+    "description": "High performance laptop with OLED display",
+    "createdAt": "2026-11-18T16:05:00.000Z"
+  },
+  {
+    "id": "3",
+    "name": "Sony WH-1000XM5",
+    "price": "349.50",
+    "category": "Audio",
+    "description": "Noise cancelling wireless headphones",
+    "createdAt": "2026-11-18T16:10:00.000Z"
+  }
+]
