@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const os = require('os');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,10 +40,10 @@ try {
     ];
 }
 
-// Vercel serverless environment support (Root fs is read-only on Vercel, /tmp is writable)
+// Environment support (Vercel serverless uses os.tmpdir(), Railway & local use data folder)
 const isVercel = Boolean(process.env.VERCEL);
 const DATA_FILE = isVercel
-    ? path.join('/tmp', 'products.json')
+    ? path.join(os.tmpdir(), 'products.json')
     : path.join(__dirname, 'data', 'products.json');
 
 // Ensure database file is initialized
@@ -252,7 +253,7 @@ const healthHandler = (req, res) => {
     res.json({
         status: 'OK',
         message: 'Product Management API is running successfully',
-        environment: isVercel ? 'vercel-serverless' : 'local',
+        environment: isVercel ? 'vercel-serverless' : (process.env.RAILWAY_ENVIRONMENT ? 'railway' : 'server'),
         timestamp: new Date().toISOString()
     });
 };
@@ -264,12 +265,12 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Only listen locally (not when running in production or Vercel serverless environment)
-if (!process.env.VERCEL && process.env.NODE_ENV !== 'production' && require.main === module) {
-    app.listen(PORT, () => {
+// Listen on process.env.PORT || 3000 binding to 0.0.0.0 when VERCEL is not set (Railway, Docker, Local)
+if (!process.env.VERCEL) {
+    app.listen(PORT, '0.0.0.0', () => {
         console.log(`===============================================`);
-        console.log(`🚀 Server running on: http://localhost:${PORT}`);
-        console.log(`📡 REST API endpoint: http://localhost:${PORT}/api/products`);
+        console.log(`🚀 Server running on: http://0.0.0.0:${PORT}`);
+        console.log(`📡 REST API endpoint: http://0.0.0.0:${PORT}/api/products`);
         console.log(`💻 Serving frontend from: ${__dirname}`);
         console.log(`===============================================`);
     });
