@@ -3,6 +3,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
+const http = require('http');
 
 const app = express();
 const PORT = parseInt(process.env.PORT, 10) || 3000;
@@ -280,17 +281,33 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Listen on process.env.PORT || 3000 binding to 0.0.0.0 when VERCEL is not set (Railway, Docker, Local)
 if (!process.env.VERCEL) {
-    const server = app.listen(PORT, '0.0.0.0', () => {
+    const primaryPort = PORT;
+    const server = app.listen(primaryPort, '0.0.0.0', () => {
         console.log(`===============================================`);
-        console.log(`🚀 Server running on: http://0.0.0.0:${PORT}`);
-        console.log(`📡 REST API endpoint: http://0.0.0.0:${PORT}/api/products`);
+        console.log(`🚀 Server running on: http://0.0.0.0:${primaryPort}`);
+        console.log(`📡 REST API endpoint: http://0.0.0.0:${primaryPort}/api/products`);
         console.log(`💻 Serving frontend from: ${__dirname}`);
         console.log(`===============================================`);
     });
 
     server.on('error', (err) => {
-        console.error('SERVER LISTEN ERROR:', err);
+        console.error('SERVER LISTEN ERROR on primary port:', err);
     });
+
+    // Dual-port safety fallback for Railway: also listen on 8080 if primary is not 8080
+    if (primaryPort !== 8080) {
+        try {
+            const secondaryServer = http.createServer(app);
+            secondaryServer.listen(8080, '0.0.0.0', () => {
+                console.log(`🚀 Safety fallback listening on: http://0.0.0.0:8080`);
+            });
+            secondaryServer.on('error', () => {
+                // Silently ignore if port 8080 is already occupied
+            });
+        } catch (e) {
+            // Ignore
+        }
+    }
 }
 
 // Export the Express app for Vercel Serverless Functions
