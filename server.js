@@ -6,39 +6,72 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Seed data fallback
+let seedProducts = [];
+try {
+    seedProducts = require('./data/products.json');
+} catch (e) {
+    seedProducts = [
+        {
+            id: "1",
+            name: "Samsung Galaxy S24",
+            price: "899.99",
+            category: "Mobile",
+            description: "Flagship smartphone with AI camera features",
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: "2",
+            name: "Dell XPS 15",
+            price: "1499.00",
+            category: "Laptop",
+            description: "High performance laptop with OLED display",
+            createdAt: new Date().toISOString()
+        },
+        {
+            id: "3",
+            name: "Sony WH-1000XM5",
+            price: "349.50",
+            category: "Audio",
+            description: "Noise cancelling wireless headphones",
+            createdAt: new Date().toISOString()
+        }
+    ];
+}
+
 // Vercel serverless environment support (Root fs is read-only on Vercel, /tmp is writable)
 const isVercel = Boolean(process.env.VERCEL);
 const DATA_FILE = isVercel
     ? path.join('/tmp', 'products.json')
     : path.join(__dirname, 'data', 'products.json');
 
-// Ensure data folder and file exist
-if (!isVercel && !fs.existsSync(path.join(__dirname, 'data'))) {
-    fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
-}
-
-// Seed data file if not present
-if (!fs.existsSync(DATA_FILE)) {
-    const seedFile = path.join(__dirname, 'data', 'products.json');
-    let initialData = [];
-    if (fs.existsSync(seedFile)) {
-        try {
-            initialData = JSON.parse(fs.readFileSync(seedFile, 'utf-8'));
-        } catch (e) {
-            initialData = [];
+// Ensure database file is initialized
+function ensureDataFile() {
+    try {
+        if (!fs.existsSync(DATA_FILE)) {
+            if (!isVercel && !fs.existsSync(path.join(__dirname, 'data'))) {
+                fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
+            }
+            fs.writeFileSync(DATA_FILE, JSON.stringify(seedProducts, null, 2), 'utf-8');
         }
+    } catch (err) {
+        console.error('Error initializing data file:', err);
     }
-    fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
 }
+ensureDataFile();
 
 // Helpers for Database Operations
 function getProducts() {
     try {
+        if (!fs.existsSync(DATA_FILE)) {
+            ensureDataFile();
+            return seedProducts;
+        }
         const data = fs.readFileSync(DATA_FILE, 'utf-8');
         return JSON.parse(data) || [];
     } catch (err) {
         console.error('Error reading database file:', err);
-        return [];
+        return seedProducts;
     }
 }
 
@@ -67,21 +100,12 @@ app.use((req, res, next) => {
 });
 
 // ============================================
-// REST API Routes
+// REST API Routes (Router)
 // ============================================
+const productRouter = express.Router();
 
-// 1. Health check & Server Status
-app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'OK',
-        message: 'Product Management API is running successfully',
-        environment: isVercel ? 'vercel-serverless' : 'local',
-        timestamp: new Date().toISOString()
-    });
-});
-
-// 2. Get All Products (with optional search query: ?q=keyword)
-app.get('/api/products', (req, res) => {
+// 1. Get All Products (with optional search query: ?q=keyword)
+productRouter.get('/', (req, res) => {
     const { q } = req.query;
     let products = getProducts();
 
@@ -101,8 +125,8 @@ app.get('/api/products', (req, res) => {
     });
 });
 
-// 3. Get Single Product by ID
-app.get('/api/products/:id', (req, res) => {
+// 2. Get Single Product by ID
+productRouter.get('/:id', (req, res) => {
     const products = getProducts();
     const product = products.find(p => String(p.id) === String(req.params.id));
 
@@ -119,8 +143,8 @@ app.get('/api/products/:id', (req, res) => {
     });
 });
 
-// 4. Create New Product
-app.post('/api/products', (req, res) => {
+// 3. Create New Product
+productRouter.post('/', (req, res) => {
     const { name, price, category, description } = req.body;
 
     // Backend Validation
@@ -152,8 +176,8 @@ app.post('/api/products', (req, res) => {
     });
 });
 
-// 5. Update Existing Product
-app.put('/api/products/:id', (req, res) => {
+// 4. Update Existing Product
+productRouter.put('/:id', (req, res) => {
     const { name, price, category, description } = req.body;
     const products = getProducts();
     const index = products.findIndex(p => String(p.id) === String(req.params.id));
@@ -183,8 +207,8 @@ app.put('/api/products/:id', (req, res) => {
     });
 });
 
-// 6. Delete Single Product
-app.delete('/api/products/:id', (req, res) => {
+// 5. Delete Single Product
+productRouter.delete('/:id', (req, res) => {
     const products = getProducts();
     const index = products.findIndex(p => String(p.id) === String(req.params.id));
 
@@ -205,8 +229,8 @@ app.delete('/api/products/:id', (req, res) => {
     });
 });
 
-// 7. Delete All Products
-app.delete('/api/products', (req, res) => {
+// 6. Delete All Products
+productRouter.delete('/', (req, res) => {
     const products = getProducts();
     const deletedCount = products.length;
 
@@ -218,6 +242,22 @@ app.delete('/api/products', (req, res) => {
         deletedCount
     });
 });
+
+// Support both /api/products and /products (handles Vercel path rewrites seamlessly)
+app.use('/api/products', productRouter);
+app.use('/products', productRouter);
+
+// Health check endpoint
+const healthHandler = (req, res) => {
+    res.json({
+        status: 'OK',
+        message: 'Product Management API is running successfully',
+        environment: isVercel ? 'vercel-serverless' : 'local',
+        timestamp: new Date().toISOString()
+    });
+};
+app.get('/api/health', healthHandler);
+app.get('/health', healthHandler);
 
 // Fallback Middleware for Single Page Application
 app.use((req, res) => {
