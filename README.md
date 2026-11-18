@@ -66,6 +66,14 @@ npm start
 
 ---
 
+## ☁️ النشر على Vercel (Deploy on Vercel)
+المشروع مهيأ بالكامل للعمل على **Vercel Serverless Functions**:
+1. تم تصدير تطبيق Express (`module.exports = app`).
+2. تم إضافة `vercel.json` لتوجيه طلبات `/api/*` تلقائياً إلى الـ Serverless Function وتخديم ملفات الفرونت إند الثابتة.
+3. متوافق مع نظام ملفات Vercel المؤقت `/tmp` لضمان استقرار قراءة وكتابة البيانات بدون أخطاء.
+
+---
+
 ## 📡 مسارات الـ API (RESTful API Endpoints)
 
 | Method | Endpoint | Description |

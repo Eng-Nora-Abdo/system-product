@@ -5,14 +5,30 @@ const fs = require('fs');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'data', 'products.json');
+
+// Vercel serverless environment support (Root fs is read-only on Vercel, /tmp is writable)
+const isVercel = Boolean(process.env.VERCEL);
+const DATA_FILE = isVercel
+    ? path.join('/tmp', 'products.json')
+    : path.join(__dirname, 'data', 'products.json');
 
 // Ensure data folder and file exist
-if (!fs.existsSync(path.join(__dirname, 'data'))) {
+if (!isVercel && !fs.existsSync(path.join(__dirname, 'data'))) {
     fs.mkdirSync(path.join(__dirname, 'data'), { recursive: true });
 }
+
+// Seed data file if not present
 if (!fs.existsSync(DATA_FILE)) {
-    fs.writeFileSync(DATA_FILE, JSON.stringify([], null, 2), 'utf-8');
+    const seedFile = path.join(__dirname, 'data', 'products.json');
+    let initialData = [];
+    if (fs.existsSync(seedFile)) {
+        try {
+            initialData = JSON.parse(fs.readFileSync(seedFile, 'utf-8'));
+        } catch (e) {
+            initialData = [];
+        }
+    }
+    fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
 }
 
 // Helpers for Database Operations
@@ -41,7 +57,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve frontend static files
+// Serve frontend static files when running locally
 app.use(express.static(__dirname));
 
 // Request Logger
@@ -59,6 +75,7 @@ app.get('/api/health', (req, res) => {
     res.json({
         status: 'OK',
         message: 'Product Management API is running successfully',
+        environment: isVercel ? 'vercel-serverless' : 'local',
         timestamp: new Date().toISOString()
     });
 });
@@ -207,11 +224,16 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Start Server
-app.listen(PORT, () => {
-    console.log(`===============================================`);
-    console.log(`🚀 Server running on: http://localhost:${PORT}`);
-    console.log(`📡 REST API endpoint: http://localhost:${PORT}/api/products`);
-    console.log(`💻 Serving frontend from: ${__dirname}`);
-    console.log(`===============================================`);
-});
+// Only listen locally (not when running in production or Vercel serverless environment)
+if (!process.env.VERCEL && process.env.NODE_ENV !== 'production' && require.main === module) {
+    app.listen(PORT, () => {
+        console.log(`===============================================`);
+        console.log(`🚀 Server running on: http://localhost:${PORT}`);
+        console.log(`📡 REST API endpoint: http://localhost:${PORT}/api/products`);
+        console.log(`💻 Serving frontend from: ${__dirname}`);
+        console.log(`===============================================`);
+    });
+}
+
+// Export the Express app for Vercel Serverless Functions
+module.exports = app;
