@@ -5,7 +5,12 @@ const fs = require('fs');
 const os = require('os');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT, 10) || 3000;
+
+// Log startup info
+console.log(`[Init] process.env.PORT: ${process.env.PORT}, using PORT: ${PORT}`);
+console.log(`[Init] process.env.VERCEL: ${process.env.VERCEL}`);
+console.log(`[Init] process.env.NODE_ENV: ${process.env.NODE_ENV}`);
 
 // Seed data fallback
 let seedProducts = [];
@@ -265,14 +270,26 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Global Error Handlers to prevent silent crashes
+process.on('uncaughtException', (err) => {
+    console.error('CRITICAL: Uncaught Exception:', err);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('CRITICAL: Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
 // Listen on process.env.PORT || 3000 binding to 0.0.0.0 when VERCEL is not set (Railway, Docker, Local)
 if (!process.env.VERCEL) {
-    app.listen(PORT, '0.0.0.0', () => {
+    const server = app.listen(PORT, '0.0.0.0', () => {
         console.log(`===============================================`);
         console.log(`🚀 Server running on: http://0.0.0.0:${PORT}`);
         console.log(`📡 REST API endpoint: http://0.0.0.0:${PORT}/api/products`);
         console.log(`💻 Serving frontend from: ${__dirname}`);
         console.log(`===============================================`);
+    });
+
+    server.on('error', (err) => {
+        console.error('SERVER LISTEN ERROR:', err);
     });
 }
 
