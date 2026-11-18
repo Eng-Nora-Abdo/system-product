@@ -16,11 +16,11 @@ const tableBody = document.getElementById('tableBody');
 let productContainer = [];
 let currentIndex = -1; // -1 means Add Mode, >= 0 means Update Mode
 
-// Validation Regular Expressions
+// Validation Regular Expressions (accepts capital or lowercase, Arabic or English)
 const regexRules = {
-    productName: /^[A-Z][a-zA-Z0-9\s]{2,24}$/, // Starts with capital, 3-25 chars
+    productName: /^[a-zA-Z0-9\u0600-\u06FF\s\-_]{2,30}$/, // 2-30 chars, any case
     productPrice: /^(?:[1-9]\d{0,4}(?:\.\d{1,2})?|100000(?:\.0{1,2})?)$/, // 1 to 100,000
-    productCategory: /^[A-Z][a-zA-Z0-9\s]{2,19}$/, // Starts with capital, 3-20 chars
+    productCategory: /^[a-zA-Z0-9\u0600-\u06FF\s\-_]{2,25}$/, // 2-25 chars, any case
     productDesc: /^$|^[\w\W\s]{3,250}$/ // Optional or 3-250 chars
 };
 
